@@ -1,0 +1,120 @@
+.contact-info {
+  width: 100%;
+  padding: 100px 8%;
+  background: #5b006e;
+  color: #ffffff;
+}
+
+.contact-content {
+  max-width: 1000px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.contact-label {
+  margin-bottom: 20px;
+  color: #ffd21f;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 3px;
+}
+
+.contact-info h2 {
+  margin: 0;
+  color: #ffd21f;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(50px, 8vw, 95px);
+  line-height: 0.85;
+  font-weight: 1000;
+  letter-spacing: -4px;
+}
+
+.contact-text {
+  max-width: 650px;
+  margin: 35px auto;
+  color: #ffffff;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  line-height: 1.7;
+}
+
+.contact-details {
+  display: flex;
+  justify-content: center;
+  margin: 45px auto;
+  max-width: 900px;
+}
+
+.contact-item {
+  flex: 1;
+  padding: 20px 30px;
+  border-right: 2px solid #ffd21f;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.contact-item:last-child {
+  border-right: none;
+}
+
+.contact-item span {
+  color: #f5008f;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.contact-item strong {
+  color: #ffffff;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 16px;
+}
+
+.contact-btn {
+  padding: 15px 35px;
+  border: 3px solid #ffd21f;
+  border-radius: 30px;
+  background: #ffd21f;
+  color: #5b006e;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.contact-btn:hover {
+  background: #f5008f;
+  border-color: #f5008f;
+  color: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .contact-info {
+    padding: 70px 6%;
+  }
+
+  .contact-info h2 {
+    font-size: clamp(45px, 13vw, 75px);
+  }
+
+  .contact-text {
+    font-size: 16px;
+  }
+
+  .contact-details {
+    flex-direction: column;
+  }
+
+  .contact-item {
+    border-right: none;
+    border-bottom: 2px solid #ffd21f;
+  }
+
+  .contact-item:last-child {
+    border-bottom: none;
+  }
+}

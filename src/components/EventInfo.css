@@ -1,0 +1,122 @@
+.event-info {
+  position: relative;
+  width: 100%;
+  padding: 90px 8%;
+  background: #fff4b8;
+  overflow: hidden;
+}
+
+.event-info-content {
+  max-width: 1100px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.event-label {
+  margin-bottom: 15px;
+  color: #5b006e;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 3px;
+}
+
+.event-info h2 {
+  margin: 0;
+  color: #f5008f;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(50px, 8vw, 100px);
+  line-height: 0.85;
+  font-weight: 1000;
+  letter-spacing: -4px;
+}
+
+.event-description {
+  max-width: 650px;
+  margin: 35px auto;
+  color: #2b124c;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 18px;
+  line-height: 1.7;
+}
+
+.event-details {
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: 0;
+  margin: 45px auto;
+  max-width: 850px;
+}
+
+.detail-item {
+  flex: 1;
+  padding: 20px 30px;
+  border-right: 2px solid #5b006e;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-item:last-child {
+  border-right: none;
+}
+
+.detail-title {
+  color: #f5008f;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.detail-item strong {
+  color: #5b006e;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 17px;
+}
+
+.event-register-btn {
+  padding: 15px 35px;
+  border: 3px solid #5b006e;
+  border-radius: 30px;
+  background: #ffd21f;
+  color: #5b006e;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.event-register-btn:hover {
+  background: #f5008f;
+  color: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .event-info {
+    padding: 65px 6%;
+  }
+
+  .event-info h2 {
+    font-size: clamp(45px, 14vw, 75px);
+  }
+
+  .event-description {
+    font-size: 16px;
+  }
+
+  .event-details {
+    flex-direction: column;
+  }
+
+  .detail-item {
+    border-right: none;
+    border-bottom: 2px solid #5b006e;
+  }
+
+  .detail-item:last-child {
+    border-bottom: none;
+  }
+}
