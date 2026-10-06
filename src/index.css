@@ -1,4 +1,13 @@
 :root {
+  --primary-yellow: #FFD21F;
+  --primary-purple: #5B2A86;
+  --dark-purple: #2B124C;
+  --black: #111111;
+  --white: #FFFFFF;
+  --light-yellow: #FFF4B8;
+  --light-purple: #E9D8FF;
+}
+:root {
   --text: #6b6375;
   --text-h: #08060d;
   --bg: #fff;
