@@ -1,0 +1,274 @@
+/* =========================
+   HERO
+========================= */
+
+.hero {
+  position: relative;
+  width: 100%;
+  min-height: 700px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  overflow: hidden;
+
+  background: #ffd21f;
+}
+
+.hero-cultural-image {
+  position: absolute;
+  left: 2%;
+  bottom: 0;
+  width: 30%;
+  height: 90%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 2;
+}
+.hero-cultural-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: bottom center;
+}
+
+/* =========================
+   SIDE TRADITIONAL IMAGE
+========================= */
+
+.decoration {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+
+  width: 25%;
+
+  background-image: url("/images/traditional_img.jpg");
+  background-repeat: no-repeat;
+  background-size: 200% 100%;
+
+  z-index: 1;
+}
+
+
+/* LEFT SIDE */
+
+.decoration-left {
+  left: 0;
+  background-position: left center;
+}
+
+
+/* RIGHT SIDE */
+
+.decoration-right {
+  right: 0;
+  background-position: right center;
+}
+
+
+/* =========================
+   CENTER CONTENT
+========================= */
+
+.hero-content {
+  position: relative;
+
+  width: 50%;
+  min-height: 700px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+
+  padding: 50px 20px;
+
+  z-index: 2;
+}
+
+
+/* =========================
+   INSTITUTE LOGO
+========================= */
+
+.institute-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  gap: 10px;
+
+  margin-bottom: 30px;
+
+  color: #111111;
+}
+
+.logo-symbol {
+  font-size: 42px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+
+  text-align: left;
+
+  font-size: 13px;
+  line-height: 1.05;
+}
+
+.logo-text span {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+
+/* =========================
+   MAIN TITLE
+========================= */
+
+.hero-content h1 {
+  margin: 0;
+
+  color: #f5008f;
+
+  font-size: clamp(55px, 8vw, 105px);
+
+  line-height: 0.82;
+
+  font-weight: 1000;
+
+  letter-spacing: -5px;
+
+  text-transform: uppercase;
+
+  text-shadow:
+    5px 5px 0 #5b006e,
+    8px 8px 0 rgba(91, 0, 110, 0.2);
+}
+
+
+/* =========================
+   TAGLINE
+========================= */
+
+.tagline {
+  margin-top: 25px;
+
+  color: #111111;
+
+  font-size: 17px;
+  font-weight: 700;
+}
+
+
+/* =========================
+   TICKET
+========================= */
+
+.event-ticket {
+  width: 245px;
+
+  margin: 35px auto 0;
+
+  padding: 12px 18px;
+
+  background: #ffffff;
+
+  border: 3px solid #222222;
+
+  border-radius: 5px;
+
+  box-shadow: 4px 4px 0 #5b006e;
+
+  transform: rotate(-1deg);
+}
+
+
+/* DATE */
+
+.ticket-date {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  gap: 10px;
+
+  padding-bottom: 8px;
+
+  border-bottom: 2px solid #222222;
+}
+
+.ticket-date strong {
+  font-size: 38px;
+  line-height: 1;
+}
+
+.ticket-date div {
+  display: flex;
+  flex-direction: column;
+
+  text-align: left;
+
+  font-size: 16px;
+  font-weight: 900;
+}
+
+
+/* FEE */
+
+.ticket-fee {
+  padding-top: 8px;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  text-align: center;
+}
+
+.ticket-fee strong {
+  font-size: 18px;
+}
+
+
+/* =========================
+   MOBILE
+========================= */
+
+@media (max-width: 768px) {
+
+  .hero {
+    min-height: 650px;
+  }
+
+  .decoration {
+    width: 16%;
+  }
+
+  .hero-content {
+    width: 68%;
+    min-height: 650px;
+
+    padding: 40px 10px;
+  }
+
+  .institute-logo {
+    margin-bottom: 25px;
+  }
+
+  .hero-content h1 {
+    font-size: 55px;
+    letter-spacing: -3px;
+  }
+
+  .event-ticket {
+    width: 220px;
+  }
+}

@@ -1,0 +1,113 @@
+
+.header {
+  position: relative;
+  width: 100%;
+  min-height: 110px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 7%;
+  background-image: url("/images/traditional_img.jpg");
+  background-size: cover;
+  background-position: center;
+  overflow: hidden;
+  z-index: 100;
+}
+
+.header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 210, 31, 0.18);
+  z-index: 0;
+}
+
+.logo {
+  position: relative;
+  z-index: 2;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 34px;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 2px;
+  color: #f5008f;
+}
+
+nav {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 70px;
+  margin-left: auto;
+  margin-right: 40px;
+}
+
+nav a {
+  position: relative;
+  z-index: 2;
+  display: inline-block;
+  color: #ffffff;
+  text-decoration: none;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  transition: 0.25s ease;
+}
+
+nav a:hover {
+  color: #ffd21f;
+  transform: translateY(-2px);
+}
+
+.register-btn {
+  position: relative;
+  z-index: 2;
+  padding: 13px 25px;
+  border: 3px solid #5b006e;
+  border-radius: 30px;
+  background: #ffd21f;
+  color: #5b006e;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: 0.25s ease;
+}
+
+.register-btn:hover {
+  background: #f5008f;
+  color: #ffffff;
+}
+
+@media (max-width: 768px) {
+  .header {
+    min-height: auto;
+    padding: 18px 5%;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  .logo {
+    font-size: 28px;
+  }
+
+  nav {
+    gap: 25px;
+    margin-left: 0;
+    margin-right: 0;
+    flex-wrap: wrap;
+  }
+
+  nav a {
+    font-size: 14px;
+  }
+
+  .register-btn {
+    padding: 10px 18px;
+    font-size: 13px;
+  }
+}
+
