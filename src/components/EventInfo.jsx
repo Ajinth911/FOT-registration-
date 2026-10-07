@@ -1,6 +1,6 @@
 import "./EventInfo.css";
 
-function EventInfo() {
+function EventInfo({ onOpenRegister }) {
   return (
     <section className="event-info" id="event">
       <div className="event-info-content">
@@ -37,7 +37,16 @@ function EventInfo() {
           </div>
         </div>
 
-        <button className="event-register-btn" onClick={() => window.open("https://luma.com/s5hucs1r", "_blank")}>
+        <button
+          className="event-register-btn"
+          onClick={() => {
+            if (onOpenRegister) {
+              onOpenRegister();
+            } else {
+              window.open("https://luma.com/s5hucs1r", "_blank");
+            }
+          }}
+        >
           REGISTER NOW
         </button>
       </div>
