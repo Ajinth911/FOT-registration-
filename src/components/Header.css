@@ -110,4 +110,27 @@ nav a:hover {
     font-size: 13px;
   }
 }
+.header-buttons {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.admin-btn {
+  padding: 12px 20px;
+  border: 2px solid #ffd21f;
+  border-radius: 25px;
+  background: #5b006e;
+  color: #ffffff;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 14px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.admin-btn:hover {
+  background: #f5008f;
+}
 
