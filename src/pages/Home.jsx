@@ -167,6 +167,25 @@ function Home() {
                 </p>
                 <div style={{ marginTop: "16px", display: "flex", gap: "10px", flexWrap: "wrap", justifyContent: "center" }}>
                   <Link
+                    to="/luma"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      fontSize: "12px",
+                      fontWeight: 700,
+                      color: "#18181b",
+                      textDecoration: "none",
+                      background: "#f4f3dd",
+                      border: "1px solid rgba(0, 0, 0, 0.12)",
+                      padding: "6px 14px",
+                      borderRadius: "20px",
+                      transition: "all 0.2s ease",
+                    }}
+                  >
+                    ✨ View Official Luma Page (/luma)
+                  </Link>
+                  <Link
                     to="/admin"
                     style={{
                       display: "inline-flex",
