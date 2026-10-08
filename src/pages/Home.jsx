@@ -1,11 +1,8 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import Preloader from "../components/Preloader";
-import RegisterModal from "../components/RegisterModal";
 import "./Home.css";
 
 function Home() {
-  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
 
   return (
     <main className="app-container">
@@ -47,14 +44,13 @@ function Home() {
               <strong>Venue:</strong> 2nd Floor, MARK 9 Office, Chettikulam
             </p>
 
-            <button
-              type="button"
+            <Link
+              to="/luma"
               className="hero-register-btn"
               id="hero-register-now-btn"
-              onClick={() => setIsRegisterOpen(true)}
             >
               Register Now
-            </button>
+            </Link>
           </div>
 
           <img
@@ -143,14 +139,13 @@ function Home() {
                 </h2>
 
                 <div className="learn-cta-wrapper">
-                  <button
-                    type="button"
+                  <Link
+                    to="/luma"
                     className="learn-register-btn"
                     id="learn-register-now-btn"
-                    onClick={() => setIsRegisterOpen(true)}
                   >
                     Register Now
-                  </button>
+                  </Link>
                 </div>
               </div>
 
@@ -170,7 +165,7 @@ function Home() {
                     www.MARK9.cc
                   </a>
                 </p>
-                <div style={{ marginTop: "16px" }}>
+                <div style={{ marginTop: "16px", display: "flex", gap: "10px", flexWrap: "wrap", justifyContent: "center" }}>
                   <Link
                     to="/admin"
                     style={{
@@ -196,10 +191,7 @@ function Home() {
         </section>
       </div>
 
-      <RegisterModal
-        isOpen={isRegisterOpen}
-        onClose={() => setIsRegisterOpen(false)}
-      />
+
     </main>
   );
 }

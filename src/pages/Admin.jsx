@@ -2,6 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import Papa from "papaparse";
 import AdminLogin from "../components/AdminLogin";
+import {
+  fetchEventData,
+  updateEventData,
+  resetEventData,
+  DEFAULT_LUMA_EVENT,
+} from "../services/eventService";
 
 function Admin() {
   const [token, setToken] = useState(() => localStorage.getItem("adminToken"));
@@ -21,6 +27,16 @@ function Admin() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
+
+  // Event & Media Editor states
+  const [eventData, setEventData] = useState(DEFAULT_LUMA_EVENT);
+  const [isEventLoading, setIsEventLoading] = useState(false);
+  const [isEventSaving, setIsEventSaving] = useState(false);
+  const [eventNotice, setEventNotice] = useState(null);
+  const [activeEventTab, setActiveEventTab] = useState("pictures"); // "pictures" | "details" | "venue" | "registration" | "about"
+  const [newGuestName, setNewGuestName] = useState("");
+  const [newGuestRole, setNewGuestRole] = useState("Participant");
+  const [newGuestAvatar, setNewGuestAvatar] = useState("");
 
   // Modal and Import states
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -87,11 +103,124 @@ function Admin() {
     }
   };
 
+  // Fetch event data
+  const loadEventSettings = async () => {
+    setIsEventLoading(true);
+    try {
+      const data = await fetchEventData();
+      if (data) setEventData(data);
+    } catch (e) {
+      console.error("Error loading event settings:", e);
+    } finally {
+      setIsEventLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (token) {
       fetchRegistrations();
+      loadEventSettings();
     }
   }, [token]);
+
+  // Event Media Upload Handler
+  const handleEventImageUpload = (e, field) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 8 * 1024 * 1024) {
+      alert("Image size should be below 8MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (uploadEvent) => {
+      setEventData((prev) => ({
+        ...prev,
+        [field]: uploadEvent.target.result,
+      }));
+      setEventNotice({
+        type: "success",
+        message: `Image loaded! Click 'Save Event Changes' to publish live.`,
+      });
+      setTimeout(() => setEventNotice(null), 4000);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Save Event Details
+  const handleSaveEventDetails = async (e) => {
+    if (e) e.preventDefault();
+    setIsEventSaving(true);
+    setEventNotice(null);
+
+    try {
+      const updated = await updateEventData(eventData, token);
+      setEventData(updated);
+      setEventNotice({
+        type: "success",
+        message: "✓ Event pictures and details updated successfully! Live on /luma.",
+      });
+      setTimeout(() => setEventNotice(null), 5000);
+    } catch (err) {
+      setEventNotice({
+        type: "error",
+        message: "Failed to save event details. Please try again.",
+      });
+    } finally {
+      setIsEventSaving(false);
+    }
+  };
+
+  // Reset Event Details to Original Luma Page
+  const handleResetEventDetails = async () => {
+    if (
+      window.confirm(
+        "Are you sure you want to reset all event details and pictures back to the original Luma event (https://luma.com/fk3rbn8c)?"
+      )
+    ) {
+      setIsEventSaving(true);
+      try {
+        const resetData = await resetEventData(token);
+        setEventData(resetData);
+        setEventNotice({
+          type: "success",
+          message: "↺ Reset complete! Original Luma event restored.",
+        });
+        setTimeout(() => setEventNotice(null), 5000);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsEventSaving(false);
+      }
+    }
+  };
+
+  // Featured Guest Management
+  const handleAddFeaturedGuest = () => {
+    if (!newGuestName.trim()) return;
+    const newGuest = {
+      name: newGuestName.trim(),
+      avatar:
+        newGuestAvatar.trim() ||
+        `https://cdn.lu.ma/avatars-default/avatar_${((eventData.featuredGuests?.length || 0) % 20) + 1}.png`,
+    };
+    setEventData((prev) => ({
+      ...prev,
+      featuredGuests: [...(prev.featuredGuests || []), newGuest],
+      guestCount: (prev.guestCount || 0) + 1,
+    }));
+    setNewGuestName("");
+    setNewGuestAvatar("");
+  };
+
+  const handleRemoveFeaturedGuest = (indexToRemove) => {
+    setEventData((prev) => ({
+      ...prev,
+      featuredGuests: (prev.featuredGuests || []).filter((_, i) => i !== indexToRemove),
+      guestCount: Math.max(1, (prev.guestCount || 1) - 1),
+    }));
+  };
 
   // If not authenticated, render login screen
   if (!token) {
@@ -388,7 +517,7 @@ function Admin() {
           if (!res.ok || !resData?.success) {
             throw new Error(
               resData?.message ||
-                "Failed to save guests in MongoDB. Please check backend."
+              "Failed to save guests in MongoDB. Please check backend."
             );
           }
 
@@ -460,13 +589,7 @@ function Admin() {
             Registrations {totalCount > 0 && `(${totalCount})`}
           </button>
 
-          <button
-            className={`sidebar-item ${activePage === "participants" ? "active" : ""}`}
-            onClick={() => setActivePage("participants")}
-          >
-            <span>♢</span>
-            Participants
-          </button>
+
         </div>
 
         {/* EVENT MANAGEMENT */}
@@ -477,8 +600,8 @@ function Admin() {
             className={`sidebar-item ${activePage === "event" ? "active" : ""}`}
             onClick={() => setActivePage("event")}
           >
-            <span>◷</span>
-            Event Details
+            <span>🖼</span>
+            Event & Media Editor
           </button>
 
           <button
@@ -489,14 +612,12 @@ function Admin() {
             Reports
           </button>
 
-          <button
-            className={`sidebar-item ${activePage === "settings" ? "active" : ""}`}
-            onClick={() => setActivePage("settings")}
-          >
-            <span>⚙</span>
-            Settings
-          </button>
+
         </div>
+
+        <Link to="/luma" target="_blank" className="sidebar-home-link" style={{ marginBottom: "6px", background: "rgba(255, 242, 0, 0.1)", color: "#827b00", borderColor: "rgba(130, 123, 0, 0.3)" }}>
+          ↗ View Luma Event (/luma)
+        </Link>
 
         <Link to="/" className="sidebar-home-link">
           ← View Public Site
@@ -658,6 +779,20 @@ function Admin() {
                 <button className="secondary-button" onClick={handleExportCSV}>
                   ↓ Export
                 </button>
+                <button
+                  className="primary-button"
+                  onClick={() => setActivePage("event")}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    background: "#827b00",
+                    borderColor: "#827b00",
+                  }}
+                  title="Edit Pictures & Details for the Luma Event"
+                >
+                  <span>🖼</span> Edit Event & Media
+                </button>
                 <button className="primary-button" onClick={() => setIsAddModalOpen(true)}>
                   + Add Participant
                 </button>
@@ -793,9 +928,18 @@ function Admin() {
                   <small>{remainingSpots} spots remaining</small>
                 </div>
 
-                <button className="event-button" onClick={() => setActivePage("registrations")}>
-                  Manage Registrations →
-                </button>
+                <div style={{ display: "flex", gap: "8px", flexDirection: "column" }}>
+                  <button
+                    className="event-button"
+                    onClick={() => setActivePage("event")}
+                    style={{ background: "#827b00", color: "#fff" }}
+                  >
+                    🎨 Edit Event Details & Pictures →
+                  </button>
+                  <button className="event-button" onClick={() => setActivePage("registrations")}>
+                    Manage Registrations →
+                  </button>
+                </div>
               </div>
             </section>
 
@@ -1107,12 +1251,623 @@ function Admin() {
           </div>
         )}
 
+        {/* EVENT & MEDIA EDITOR */}
         {activePage === "event" && (
-          <div className="dashboard-header">
-            <div>
-              <p className="dashboard-breadcrumb">EVENT MANAGEMENT</p>
-              <h1>Event Details</h1>
-              <p>MAKKA DESIGN PAKKA • 03 October 2026 • Nagercoil</p>
+          <div className="event-editor-page">
+            <div className="dashboard-header">
+              <div>
+                <p className="dashboard-breadcrumb">EVENT MANAGEMENT / LUMA EDITOR</p>
+                <h1>Luma Page & Media Editor</h1>
+                <p>
+                  Customise event pictures, cover art, host details, venue, pricing and description for the public Luma page.
+                </p>
+              </div>
+
+              <div className="header-actions">
+                <Link
+                  to="/luma"
+                  target="_blank"
+                  className="secondary-button"
+                  style={{ display: "flex", alignItems: "center", gap: "6px", textDecoration: "none" }}
+                  title="Preview live Luma event in new tab"
+                >
+                  <span>↗</span> View Public Page
+                </Link>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  style={{ color: "#dc2626", borderColor: "#fca5a5" }}
+                  onClick={handleResetEventDetails}
+                  disabled={isEventSaving}
+                  title="Reset to default fk3rbn8c event"
+                >
+                  ↺ Reset Defaults
+                </button>
+                <button
+                  type="button"
+                  className="primary-button"
+                  style={{ background: "#827b00", borderColor: "#827b00" }}
+                  onClick={handleSaveEventDetails}
+                  disabled={isEventSaving}
+                >
+                  {isEventSaving ? "Saving..." : "💾 Save Event Changes"}
+                </button>
+              </div>
+            </div>
+
+            {/* EVENT NOTICE */}
+            {eventNotice && (
+              <div
+                style={{
+                  margin: "16px 0",
+                  padding: "12px 18px",
+                  background: eventNotice.type === "success" ? "#ecfdf5" : "#fee2e2",
+                  border: `1px solid ${eventNotice.type === "success" ? "#34d399" : "#f87171"}`,
+                  borderRadius: "10px",
+                  color: eventNotice.type === "success" ? "#065f46" : "#991b1b",
+                  fontWeight: 600,
+                  fontSize: "13.5px",
+                }}
+              >
+                {eventNotice.message}
+              </div>
+            )}
+
+            {/* TAB SELECTOR */}
+            <div className="event-tab-bar">
+              <button
+                type="button"
+                className={`event-tab-btn ${activeEventTab === "pictures" ? "active" : ""}`}
+                onClick={() => setActiveEventTab("pictures")}
+              >
+                📸 Pictures & Media
+              </button>
+              <button
+                type="button"
+                className={`event-tab-btn ${activeEventTab === "details" ? "active" : ""}`}
+                onClick={() => setActiveEventTab("details")}
+              >
+                📝 Event Details & Date
+              </button>
+              <button
+                type="button"
+                className={`event-tab-btn ${activeEventTab === "venue" ? "active" : ""}`}
+                onClick={() => setActiveEventTab("venue")}
+              >
+                📍 Venue & Map
+              </button>
+              <button
+                type="button"
+                className={`event-tab-btn ${activeEventTab === "registration" ? "active" : ""}`}
+                onClick={() => setActiveEventTab("registration")}
+              >
+                🎟 Tickets & Attendees
+              </button>
+              <button
+                type="button"
+                className={`event-tab-btn ${activeEventTab === "about" ? "active" : ""}`}
+                onClick={() => setActiveEventTab("about")}
+              >
+                📄 About & Contact
+              </button>
+            </div>
+
+            {/* TAB 1: PICTURES & MEDIA */}
+            {activeEventTab === "pictures" && (
+              <div className="event-editor-card">
+                <h3>Pictures & Visual Media</h3>
+                <p className="subtitle">
+                  Manage the cover graphic and host profile avatar displayed on the Luma page.
+                </p>
+
+                <div className="event-grid-2col">
+                  {/* COVER IMAGE */}
+                  <div>
+                    <label style={{ fontWeight: 700, fontSize: "14px", display: "block", marginBottom: "8px" }}>
+                      Cover Image Artwork
+                    </label>
+
+                    <div className="admin-img-preview-box" style={{ marginBottom: "14px" }}>
+                      <img
+                        src={eventData.coverImage || "/luma-cover.png"}
+                        alt="Cover Preview"
+                        onError={(e) => {
+                          e.currentTarget.src = "/luma-cover.png";
+                        }}
+                      />
+                    </div>
+
+                    <div className="admin-form-group">
+                      <label>Image URL</label>
+                      <input
+                        type="text"
+                        value={eventData.coverImage || ""}
+                        onChange={(e) => setEventData({ ...eventData, coverImage: e.target.value })}
+                        placeholder="Paste image URL here"
+                      />
+                    </div>
+
+                    <div style={{ marginTop: "10px" }}>
+                      <label className="secondary-button" style={{ display: "inline-flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
+                        📁 Upload New Cover Image
+                        <input
+                          type="file"
+                          accept="image/*"
+                          style={{ display: "none" }}
+                          onChange={(e) => handleEventImageUpload(e, "coverImage")}
+                        />
+                      </label>
+                    </div>
+
+                    <div style={{ marginTop: "12px" }}>
+                      <span style={{ fontSize: "12px", color: "#6b7280" }}>Quick Presets:</span>
+                      <div className="preset-chip-group">
+                        <button
+                          type="button"
+                          className="preset-chip-btn"
+                          onClick={() =>
+                            setEventData({
+                              ...eventData,
+                              coverImage:
+                                "https://images.lumacdn.com/uploads/7t/8bd0d1df-05ba-4aa7-bac6-c9b5a897bee5.png",
+                            })
+                          }
+                        >
+                          Original Luma Cover
+                        </button>
+                        <button
+                          type="button"
+                          className="preset-chip-btn"
+                          onClick={() => setEventData({ ...eventData, coverImage: "/luma-cover.png" })}
+                        >
+                          Local Poster
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* HOST PROFILE AVATAR */}
+                  <div>
+                    <label style={{ fontWeight: 700, fontSize: "14px", display: "block", marginBottom: "8px" }}>
+                      Host Profile & Avatar
+                    </label>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "16px", marginBottom: "16px" }}>
+                      <img
+                        src={eventData.hostAvatar || "/avatar_akshaya.png"}
+                        alt="Host Avatar Preview"
+                        className="admin-avatar-preview"
+                        onError={(e) => {
+                          e.currentTarget.src = "/avatar_akshaya.png";
+                        }}
+                      />
+                      <div>
+                        <strong style={{ display: "block", fontSize: "16px" }}>{eventData.hostName || "MaRK9."}</strong>
+                        <span style={{ fontSize: "12px", color: "#6b7280" }}>Event Organizer</span>
+                      </div>
+                    </div>
+
+                    <div className="admin-form-group">
+                      <label>Host Name</label>
+                      <input
+                        type="text"
+                        value={eventData.hostName || ""}
+                        onChange={(e) => setEventData({ ...eventData, hostName: e.target.value })}
+                        placeholder="e.g. MaRK9."
+                      />
+                    </div>
+
+                    <div className="admin-form-group">
+                      <label>Host Avatar URL</label>
+                      <input
+                        type="text"
+                        value={eventData.hostAvatar || ""}
+                        onChange={(e) => setEventData({ ...eventData, hostAvatar: e.target.value })}
+                        placeholder="Paste avatar URL here"
+                      />
+                    </div>
+
+                    <div style={{ marginTop: "10px" }}>
+                      <label className="secondary-button" style={{ display: "inline-flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
+                        👤 Upload Avatar Photo
+                        <input
+                          type="file"
+                          accept="image/*"
+                          style={{ display: "none" }}
+                          onChange={(e) => handleEventImageUpload(e, "hostAvatar")}
+                        />
+                      </label>
+                    </div>
+
+                    <div style={{ marginTop: "14px", display: "flex", alignItems: "center", gap: "8px" }}>
+                      <input
+                        type="checkbox"
+                        id="hostVerifiedCheck"
+                        checked={!!eventData.hostVerified}
+                        onChange={(e) => setEventData({ ...eventData, hostVerified: e.target.checked })}
+                      />
+                      <label htmlFor="hostVerifiedCheck" style={{ fontSize: "13.5px", cursor: "pointer" }}>
+                        Display Verified Badge (✓) next to host name
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: EVENT DETAILS & DATE */}
+            {activeEventTab === "details" && (
+              <div className="event-editor-card">
+                <h3>Event Details & Date Schedule</h3>
+                <p className="subtitle">
+                  Configure the event title, category, timings and calendar settings.
+                </p>
+
+                <div className="admin-form-group">
+                  <label>Event Title (with Unicode styling or normal text)</label>
+                  <input
+                    type="text"
+                    value={eventData.title || ""}
+                    onChange={(e) => setEventData({ ...eventData, title: e.target.value })}
+                    placeholder="e.g. 𝐌𝐚𝐤𝐤𝐚 𝐃𝐞𝐬𝐢𝐠𝐧 𝐏𝐚𝐤𝐤𝐚"
+                  />
+                  <small style={{ color: "#6b7280", marginTop: "4px", display: "block" }}>
+                    Original Unicode: 𝐌𝐚𝐤𝐤𝐚 𝐃𝐞𝐬𝐢𝐠𝐧 𝐏𝐚𝐤𝐤𝐚
+                  </small>
+                </div>
+
+                <div className="admin-form-group">
+                  <label>Plain Title (used for calendar export & sharing)</label>
+                  <input
+                    type="text"
+                    value={eventData.plainTitle || ""}
+                    onChange={(e) => setEventData({ ...eventData, plainTitle: e.target.value })}
+                    placeholder="e.g. Makka Design Pakka"
+                  />
+                </div>
+
+                <div className="event-grid-2col">
+                  <div className="admin-form-group">
+                    <label>Event Category</label>
+                    <input
+                      type="text"
+                      value={eventData.category || ""}
+                      onChange={(e) => setEventData({ ...eventData, category: e.target.value })}
+                      placeholder="e.g. Arts & Culture"
+                    />
+                  </div>
+
+                  <div className="admin-form-group">
+                    <label>Timezone</label>
+                    <input
+                      type="text"
+                      value={eventData.timezone || ""}
+                      onChange={(e) => setEventData({ ...eventData, timezone: e.target.value })}
+                      placeholder="e.g. Asia/Kolkata"
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
+                  <div className="admin-form-group">
+                    <label>Date (YYYY-MM-DD)</label>
+                    <input
+                      type="date"
+                      value={eventData.startDate || "2026-10-03"}
+                      onChange={(e) => setEventData({ ...eventData, startDate: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="admin-form-group">
+                    <label>Start Time</label>
+                    <input
+                      type="text"
+                      value={eventData.startTime || ""}
+                      onChange={(e) => setEventData({ ...eventData, startTime: e.target.value })}
+                      placeholder="e.g. 10:00 AM"
+                    />
+                  </div>
+
+                  <div className="admin-form-group">
+                    <label>End Time</label>
+                    <input
+                      type="text"
+                      value={eventData.endTime || ""}
+                      onChange={(e) => setEventData({ ...eventData, endTime: e.target.value })}
+                      placeholder="e.g. 12:00 PM"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: VENUE & LOCATION */}
+            {activeEventTab === "venue" && (
+              <div className="event-editor-card">
+                <h3>Venue & Google Maps Location</h3>
+                <p className="subtitle">
+                  Configure the venue name, street address, floor details and map preview.
+                </p>
+
+                <div className="event-grid-2col">
+                  <div>
+                    <div className="admin-form-group">
+                      <label>Venue Name</label>
+                      <input
+                        type="text"
+                        value={eventData.locationName || ""}
+                        onChange={(e) => setEventData({ ...eventData, locationName: e.target.value })}
+                        placeholder="e.g. MARK9"
+                      />
+                    </div>
+
+                    <div className="admin-form-group">
+                      <label>Full Street Address</label>
+                      <textarea
+                        rows="2"
+                        value={eventData.locationAddress || ""}
+                        onChange={(e) => setEventData({ ...eventData, locationAddress: e.target.value })}
+                        placeholder="Full postal address"
+                      />
+                    </div>
+
+                    <div className="admin-form-group">
+                      <label>Floor / Office Details</label>
+                      <input
+                        type="text"
+                        value={eventData.locationDescription || ""}
+                        onChange={(e) => setEventData({ ...eventData, locationDescription: e.target.value })}
+                        placeholder="e.g. 2nd Floor, MARK9 Office"
+                      />
+                    </div>
+
+                    <div className="admin-form-group">
+                      <label>City & Country</label>
+                      <input
+                        type="text"
+                        value={eventData.cityState || ""}
+                        onChange={(e) => setEventData({ ...eventData, cityState: e.target.value })}
+                        placeholder="e.g. Nagercoil, India"
+                      />
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                      <div className="admin-form-group">
+                        <label>Latitude</label>
+                        <input
+                          type="number"
+                          step="any"
+                          value={eventData.latitude || 8.174926}
+                          onChange={(e) => setEventData({ ...eventData, latitude: parseFloat(e.target.value) })}
+                        />
+                      </div>
+
+                      <div className="admin-form-group">
+                        <label>Longitude</label>
+                        <input
+                          type="number"
+                          step="any"
+                          value={eventData.longitude || 77.4307038}
+                          onChange={(e) => setEventData({ ...eventData, longitude: parseFloat(e.target.value) })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* MAP PREVIEW */}
+                  <div>
+                    <label style={{ fontWeight: 700, fontSize: "14px", display: "block", marginBottom: "8px" }}>
+                      Interactive Map Embed Preview
+                    </label>
+                    <div style={{ width: "100%", height: "260px", borderRadius: "12px", overflow: "hidden", border: "1px solid #e5e7eb" }}>
+                      <iframe
+                        title="Admin Map Preview"
+                        style={{ width: "100%", height: "100%", border: 0 }}
+                        src={`https://maps.google.com/maps?q=${eventData.latitude || 8.174926},${eventData.longitude || 77.4307038}&hl=en&z=15&output=embed`}
+                      />
+                    </div>
+                    <small style={{ color: "#6b7280", marginTop: "8px", display: "block" }}>
+                      Location markers render automatically based on latitude and longitude coordinates.
+                    </small>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 4: TICKETS & REGISTRATION */}
+            {activeEventTab === "registration" && (
+              <div className="event-editor-card">
+                <h3>Tickets, Status & Social Proof</h3>
+                <p className="subtitle">
+                  Control whether registrations are closed or open, set ticket pricing, and manage featured guest avatars.
+                </p>
+
+                <div className="event-grid-2col">
+                  <div>
+                    <div className="admin-form-group">
+                      <label>Registration Status</label>
+                      <select
+                        value={eventData.registrationStatus || "closed"}
+                        onChange={(e) => setEventData({ ...eventData, registrationStatus: e.target.value })}
+                        style={{ padding: "10px", borderRadius: "8px", border: "1px solid #d1d5db", width: "100%", fontWeight: 600 }}
+                      >
+                        <option value="closed">Closed</option>
+                        <option value="open">Open</option>
+                        <option value="coming soon">Coming Soon</option>
+                      </select>
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                      <div className="admin-form-group">
+                        <label>Ticket Price</label>
+                        <input
+                          type="text"
+                          value={eventData.ticketPrice || "₹99"}
+                          onChange={(e) => setEventData({ ...eventData, ticketPrice: e.target.value })}
+                          placeholder="e.g. ₹99"
+                        />
+                      </div>
+
+                      <div className="admin-form-group">
+                        <label>Guest Count Display</label>
+                        <input
+                          type="number"
+                          value={eventData.guestCount || 42}
+                          onChange={(e) => setEventData({ ...eventData, guestCount: parseInt(e.target.value, 10) })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="admin-form-group">
+                      <label>Guest Summary Text</label>
+                      <input
+                        type="text"
+                        value={eventData.guestSummary || ""}
+                        onChange={(e) => setEventData({ ...eventData, guestSummary: e.target.value })}
+                        placeholder="e.g. Thanisha N, Gokul Krishna and 40 others"
+                      />
+                    </div>
+                  </div>
+
+                  {/* FEATURED GUESTS LIST */}
+                  <div>
+                    <label style={{ fontWeight: 700, fontSize: "14px", display: "block", marginBottom: "8px" }}>
+                      Featured Attendees ({eventData.featuredGuests?.length || 0})
+                    </label>
+
+                    <div style={{ maxHeight: "200px", overflowY: "auto", border: "1px solid #e5e7eb", borderRadius: "10px", padding: "8px", marginBottom: "12px" }}>
+                      {(eventData.featuredGuests || []).map((guest, idx) => (
+                        <div key={guest.name + idx} className="admin-guest-chip">
+                          <div className="admin-guest-chip-info">
+                            <img
+                              src={guest.avatar || `https://cdn.lu.ma/avatars-default/avatar_${idx + 1}.png`}
+                              alt={guest.name}
+                              className="admin-guest-chip-avatar"
+                            />
+                            <div>
+                              <strong style={{ fontSize: "13.5px" }}>{guest.name}</strong>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontWeight: 700 }}
+                            onClick={() => handleRemoveFeaturedGuest(idx)}
+                            title="Remove Attendee"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* ADD NEW GUEST */}
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <input
+                        type="text"
+                        placeholder="New Guest Name..."
+                        value={newGuestName}
+                        onChange={(e) => setNewGuestName(e.target.value)}
+                        style={{ flex: 1, padding: "8px 12px", borderRadius: "8px", border: "1px solid #d1d5db", fontSize: "13px" }}
+                      />
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        onClick={handleAddFeaturedGuest}
+                      >
+                        + Add Guest
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 5: ABOUT & CONTACT */}
+            {activeEventTab === "about" && (
+              <div className="event-editor-card">
+                <h3>About Event & Contact Details</h3>
+                <p className="subtitle">
+                  Customise the story, questions, contact phone number, and official website.
+                </p>
+
+                <div className="admin-form-group">
+                  <label>About Headline</label>
+                  <input
+                    type="text"
+                    value={eventData.aboutHeadline || ""}
+                    onChange={(e) => setEventData({ ...eventData, aboutHeadline: e.target.value })}
+                    placeholder="e.g. WHAT IF YOUR NEXT IDEA CHANGES EVERYTHING?"
+                  />
+                </div>
+
+                <div className="event-grid-2col">
+                  <div className="admin-form-group">
+                    <label>Contact Phone Number</label>
+                    <input
+                      type="text"
+                      value={eventData.contactPhone || ""}
+                      onChange={(e) => setEventData({ ...eventData, contactPhone: e.target.value })}
+                      placeholder="e.g. 99945 35121"
+                    />
+                  </div>
+
+                  <div className="admin-form-group">
+                    <label>Powered By Website Link</label>
+                    <input
+                      type="text"
+                      value={eventData.contactWebsite || ""}
+                      onChange={(e) => setEventData({ ...eventData, contactWebsite: e.target.value })}
+                      placeholder="e.g. https://www.mark9.cc/"
+                    />
+                  </div>
+                </div>
+
+                <div className="admin-form-group">
+                  <label>Event Description Paragraphs</label>
+                  <textarea
+                    rows="6"
+                    value={(eventData.aboutParagraphs || []).join("\n\n")}
+                    onChange={(e) =>
+                      setEventData({
+                        ...eventData,
+                        aboutParagraphs: e.target.value.split("\n\n").filter(Boolean),
+                      })
+                    }
+                    placeholder="Enter paragraphs separated by blank lines"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* BOTTOM SAVE TOOLBAR */}
+            <div className="event-save-toolbar">
+              <div>
+                <strong style={{ fontSize: "14px", color: "#111827" }}>Ready to update the live page?</strong>
+                <p style={{ margin: "2px 0 0", fontSize: "12.5px", color: "#6b7280" }}>
+                  All updates sync instantly with MongoDB and localStorage.
+                </p>
+              </div>
+
+              <div style={{ display: "flex", gap: "12px" }}>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  style={{ color: "#dc2626", borderColor: "#fca5a5" }}
+                  onClick={handleResetEventDetails}
+                  disabled={isEventSaving}
+                >
+                  ↺ Reset Defaults
+                </button>
+                <button
+                  type="button"
+                  className="primary-button"
+                  style={{ background: "#827b00", borderColor: "#827b00" }}
+                  onClick={handleSaveEventDetails}
+                  disabled={isEventSaving}
+                >
+                  {isEventSaving ? "Saving..." : "💾 Save Event Changes"}
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -1131,15 +1886,7 @@ function Admin() {
           </div>
         )}
 
-        {activePage === "settings" && (
-          <div className="dashboard-header">
-            <div>
-              <p className="dashboard-breadcrumb">SETTINGS</p>
-              <h1>Event Configuration</h1>
-              <p>Configure ticket price (₹99), registration capacity (150), and API endpoints.</p>
-            </div>
-          </div>
-        )}
+
       </section>
 
       {/* ADD PARTICIPANT MODAL */}

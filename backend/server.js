@@ -6,6 +6,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import registrationRoutes from "./routes/registrationRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
+import eventRoutes from "./routes/eventRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,9 +17,11 @@ const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "25mb" })); // support picture base64 uploads
+app.use(express.urlencoded({ extended: true, limit: "25mb" }));
 app.use("/api/auth", authRoutes);
 app.use("/api/registrations", registrationRoutes);
+app.use("/api/event", eventRoutes);
 
 // MongoDB connection
 mongoose

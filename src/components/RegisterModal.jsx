@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import "./RegisterModal.css";
 
 function RegisterModal({ isOpen, onClose, onRegistered }) {
@@ -219,14 +220,13 @@ function RegisterModal({ isOpen, onClose, onRegistered }) {
 
               <div className="modal-alt-option">
                 <span>Or register via external platform:</span>
-                <a
-                  href="https://luma.com/s5hucs1r"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Link
+                  to="/luma"
                   className="modal-luma-link"
+                  onClick={onClose}
                 >
                   Register on Luma ↗
-                </a>
+                </Link>
               </div>
             </form>
           </div>
