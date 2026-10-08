@@ -4,6 +4,48 @@ import { requireAdminAuth } from "./authRoutes.js";
 
 const router = express.Router();
 
+// GET public registration stats (count + recent names) — no auth required
+router.get("/stats", async (req, res) => {
+  try {
+    const count = await Registration.countDocuments();
+    // Get the most recent registrants (up to 10) for avatar display
+    const recent = await Registration.find()
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .select("name college department createdAt");
+
+    // Build a guest summary string like "John, Jane and 5 others"
+    let guestSummary = "";
+    if (recent.length === 0) {
+      guestSummary = "Be the first to register!";
+    } else if (recent.length === 1) {
+      guestSummary = recent[0].name;
+    } else if (recent.length === 2) {
+      guestSummary = `${recent[0].name} and ${recent[1].name}`;
+    } else {
+      const othersCount = count - 2;
+      guestSummary = `${recent[0].name}, ${recent[1].name} and ${othersCount} other${othersCount !== 1 ? "s" : ""}`;
+    }
+
+    res.status(200).json({
+      count,
+      guestSummary,
+      recentGuests: recent.map((r, idx) => ({
+        name: r.name,
+        role: r.department || "Participant",
+        avatar: `https://cdn.lu.ma/avatars-default/avatar_${(idx % 20) + 1}.png`,
+      })),
+    });
+  } catch (error) {
+    console.error("Error fetching registration stats:", error);
+    res.status(200).json({
+      count: 0,
+      guestSummary: "Be the first to register!",
+      recentGuests: [],
+    });
+  }
+});
+
 // GET all registrations / participants (Protected: Admin only)
 router.get("/", requireAdminAuth, async (req, res) => {
   try {
